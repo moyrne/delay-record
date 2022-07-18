@@ -4,15 +4,31 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/moyrne/delay-record/pkg/pingclient/internal/repo"
 	"github.com/moyrne/delay-record/pkg/pingserver/params"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
-var log = zap.NewExample()
+var log = newLogger()
+
+func newLogger() *zap.Logger {
+	encoderCfg := zapcore.EncoderConfig{
+		TimeKey:        "time",
+		MessageKey:     "msg",
+		LevelKey:       "level",
+		NameKey:        "logger",
+		EncodeLevel:    zapcore.LowercaseLevelEncoder,
+		EncodeTime:     zapcore.ISO8601TimeEncoder,
+		EncodeDuration: zapcore.StringDurationEncoder,
+	}
+	core := zapcore.NewCore(zapcore.NewJSONEncoder(encoderCfg), os.Stdout, zap.DebugLevel)
+	return zap.New(core)
+}
 
 type Ping struct {
 	Host   string
@@ -30,6 +46,7 @@ func NewPingClient(host string, data repo.PingRepo) *Ping {
 
 func (p *Ping) Ping() {
 	resp := p.ping()
+	log.Info("ping", zap.String("host", p.Host), zap.Error(resp.Error))
 
 	if err := p.Data.InsertRecord(&repo.Ping{
 		StartTime: resp.StartTime,

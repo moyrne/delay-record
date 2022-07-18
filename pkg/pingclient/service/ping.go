@@ -14,6 +14,8 @@ func Run(host string) {
 		panic(err)
 	}
 
+	defer repo.Close()
+
 	client := biz.NewPingClient(host, repo)
 
 	tick := time.Tick(time.Millisecond * 300)

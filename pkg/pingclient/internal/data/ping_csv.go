@@ -30,6 +30,11 @@ func NewPingCSV(filename string) (*PingCSV, error) {
 	}, nil
 }
 
+func (p *PingCSV) Close() {
+	p.writer.Flush()
+	p.file.Close()
+}
+
 func (p *PingCSV) InsertRecord(ping *repo.Ping) error {
 	if err := p.writer.Write([]string{
 		ping.StartTime.String(),
